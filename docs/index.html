@@ -1,0 +1,632 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Does Explainability Transfer?</title>
+<meta name="description" content="Does Explainability Transfer Across Architectures and Imaging Modalities? A Controlled Benchmark of Attribution Methods on Vision Transformers and CNNs for Medical Image Analysis.">
+<style>
+:root{
+  color-scheme: light;
+  --bg:#fafaf8; --surface:#ffffff; --sunken:#f2f2ef; --ink:#1a1c20; --muted:#5b616c; --faint:#8b919b;
+  --line:#e2e3e6; --accent:#2556c4; --accent-soft:#e8eefb; --btn:#22252b; --btn-ink:#fff;
+  --pos:#2f6fde; --neg:#d0463c; --arch:#9aa0a9;
+  --f-gradient:#2f6fde; --f-cam:#d46f12; --f-attention:#8b5cf6; --f-perturbation:#0f8f6a; --f-baseline:#8f949c;
+  --serif:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,serif;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme: dark;
+    --bg:#111317; --surface:#171a1f; --sunken:#1d2026; --ink:#e8eaee; --muted:#a0a6b1; --faint:#737a86;
+    --line:#2a2e36; --accent:#7ea3ff; --accent-soft:#1d2740; --btn:#e8eaee; --btn-ink:#111317;
+    --pos:#6d9dff; --neg:#f0776c; --arch:#6b717b;
+    --f-gradient:#6d9dff; --f-cam:#f0a052; --f-attention:#ad90ff; --f-perturbation:#3fc79c; --f-baseline:#7d838d;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme: dark;
+  --bg:#111317; --surface:#171a1f; --sunken:#1d2026; --ink:#e8eaee; --muted:#a0a6b1; --faint:#737a86;
+  --line:#2a2e36; --accent:#7ea3ff; --accent-soft:#1d2740; --btn:#e8eaee; --btn-ink:#111317;
+  --pos:#6d9dff; --neg:#f0776c; --arch:#6b717b;
+  --f-gradient:#6d9dff; --f-cam:#f0a052; --f-attention:#ad90ff; --f-perturbation:#3fc79c; --f-baseline:#7d838d;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 var(--sans);-webkit-font-smoothing:antialiased}
+img{max-width:100%}
+a{color:var(--accent)}
+.skip{position:absolute;left:-999px}.skip:focus{left:16px;top:16px;background:var(--surface);padding:8px 12px;z-index:9}
+.wrap{max-width:1040px;margin:0 auto;padding-inline:20px}
+header.hero{padding-block:64px 28px;text-align:center}
+h1{font:600 clamp(1.9rem,4.6vw,3rem)/1.14 var(--serif);letter-spacing:-.01em;margin:0 auto 14px;max-width:21em}
+.sub{font-size:1.15rem;color:var(--muted);max-width:40em;margin:0 auto 26px}
+.authors{font-size:1.08rem;margin:0 0 10px;display:flex;flex-wrap:wrap;justify-content:center;gap:4px 22px}
+.authors span{white-space:nowrap}
+sup{font-size:.68em;color:var(--muted);margin-left:1px}
+.affil{color:var(--muted);font-size:.9rem;margin:0 auto 8px;max-width:52em;line-height:1.5}
+.affil span{display:inline-block;margin:0 10px}
+.corr{color:var(--faint);font-size:.82rem;margin:0 0 26px}
+.btns{display:flex;flex-wrap:wrap;justify-content:center;gap:10px}
+.btn{display:inline-flex;align-items:center;gap:7px;background:var(--btn);color:var(--btn-ink);text-decoration:none;
+  padding:9px 18px;border-radius:999px;font-weight:550;font-size:.95rem;border:1px solid transparent}
+.btn:hover{opacity:.86}
+.btn.off{background:transparent;color:var(--muted);border:1px dashed var(--line);cursor:default}
+.btn.off:hover{opacity:1}
+.btn svg{width:16px;height:16px;fill:currentColor}
+section{padding-block:44px;border-top:1px solid var(--line)}
+section.first{border-top:0;padding-top:8px}
+.rq{display:block;text-align:center;font-size:.78rem;font-weight:650;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin-bottom:4px}
+h2{font:600 1.75rem/1.2 var(--serif);margin:0 0 8px;text-align:center}
+.lede{color:var(--muted);text-align:center;max-width:46em;margin:0 auto 24px}
+h3{font:600 1.1rem/1.3 var(--sans);margin:0 0 8px}
+p{margin:0 0 14px}
+.prose{max-width:46em;margin-inline:auto;text-align:justify;hyphens:auto}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px}
+.controls{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;margin:0 0 14px}
+.controls label{font-size:.85rem;color:var(--muted);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+select,.seg button{font:inherit;font-size:.9rem;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:6px 10px}
+.seg{display:inline-flex;flex-wrap:wrap;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{border:0;border-radius:0;border-right:1px solid var(--line);cursor:pointer;background:transparent}
+.seg button:last-child{border-right:0}
+.seg button[aria-pressed="true"]{background:var(--accent-soft);color:var(--accent);font-weight:600}
+.toggle{margin-left:auto;font-size:.85rem;background:none;border:0;color:var(--accent);cursor:pointer;text-decoration:underline;padding:0}
+.scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.caption{font-size:.92rem;color:var(--muted);margin:12px 0 0}
+.caption b{color:var(--ink)}
+svg text{font-family:var(--sans);fill:var(--ink)}
+svg .muted{fill:var(--muted)}
+.bump{min-width:620px;display:block}
+.bump g.ln{cursor:pointer;transition:opacity .15s}
+.bump.hl g.ln:not(.on){opacity:.13}
+.bump g.ln.on path{stroke-width:4}
+.legend{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:.85rem;color:var(--muted);margin-top:10px}
+.legend i{display:inline-block;width:14px;height:4px;border-radius:2px;margin-right:6px;vertical-align:middle}
+.legend .sq{width:12px;height:12px;border-radius:3px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-top:26px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.stat b{display:block;font:600 1.9rem/1.1 var(--serif)}
+.stat span{font-size:.85rem;color:var(--muted)}
+.keys{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;margin-top:22px}
+.key{border-left:3px solid var(--accent);background:var(--surface);border-radius:0 10px 10px 0;padding:12px 14px;font-size:.93rem}
+.key b{display:block;font-size:1rem;margin-bottom:2px}
+table{border-collapse:collapse;width:100%;font-size:.9rem;font-variant-numeric:tabular-nums}
+th,td{padding:7px 10px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+th{font-weight:600;color:var(--muted);font-size:.78rem;text-transform:uppercase;letter-spacing:.03em}
+th:first-child,td:first-child{text-align:left}
+th.grp-h{text-align:center;border-bottom:2px solid var(--line);color:var(--ink)}
+tr.grp td{background:var(--sunken);color:var(--muted);font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.05em;padding:5px 10px}
+td.best{font-weight:700}
+td.second{text-decoration:underline;text-underline-offset:3px}
+td.sep,th.sep{border-left:2px solid var(--line)}
+td .sw{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:8px;vertical-align:baseline}
+td.ok{color:#1b8a3c;font-weight:700} td.no{color:var(--neg);font-weight:700}
+.chance td{color:var(--muted);font-style:italic}
+figure{margin:0}
+.fig{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px}
+.fig img{display:block;width:100%;height:auto}
+.fig img.wide{min-width:900px}
+details.explore{margin-top:18px}
+details.explore summary{cursor:pointer;color:var(--accent);font-weight:600;font-size:.93rem;padding:6px 0;list-style-position:inside}
+details.explore[open] summary{margin-bottom:10px}
+pre{background:var(--sunken);border:1px solid var(--line);border-radius:10px;padding:16px 18px;overflow-x:auto;font:13.5px/1.6 var(--mono);margin:0}
+.copy-wrap{position:relative}
+.copy{position:absolute;top:8px;right:8px;font-size:.78rem;border:1px solid var(--line);background:var(--surface);color:var(--muted);border-radius:6px;padding:3px 9px;cursor:pointer}
+.ds-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:14px}
+.ds-grid p{font-size:.93rem;color:var(--muted)}
+.links{display:flex;flex-wrap:wrap;gap:8px 16px;font-size:.92rem}
+footer{border-top:1px solid var(--line);padding-block:30px 50px;color:var(--muted);font-size:.88rem;text-align:center}
+@media (max-width:640px){header.hero{padding-block:40px 20px}.toggle{margin-left:0}}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="hero wrap">
+  <h1>Does Explainability Transfer Across Architectures and Imaging Modalities?</h1>
+  <p class="sub">A Controlled Benchmark of Attribution Methods on Vision Transformers and CNNs for Medical Image Analysis</p>
+  <p class="authors">
+    <span>Sahan Silva<sup>1</sup></span>
+    <span>Chamuditha Wanninayake<sup>2</sup></span>
+    <span>Pubudu Sanjeewani<sup>3,*</sup></span>
+    <span>Asanka Perera<sup>4</sup></span>
+  </p>
+  <p class="affil">
+    <span><sup>1</sup>Faculty of Computing and IT, Sri Lanka Technology Campus, Sri Lanka</span>
+    <span><sup>2</sup>Faculty of Computing, Sri Lanka Institute of Information Technology, Sri Lanka</span>
+    <span><sup>3</sup>School of Computing Technologies, RMIT University, Melbourne, Australia</span>
+    <span><sup>4</sup>School of Engineering &amp; Digital Technologies, University of Southern Queensland, Brisbane, Australia</span>
+  </p>
+  <p class="corr">* Corresponding author</p>
+  <nav class="btns" aria-label="Project links">
+    <a class="btn" href="#abstract">Abstract</a>
+    <a class="btn" href="#results">Results</a>
+    <a class="btn" href="#datasets">Datasets</a>
+    <a class="btn" href="benchmark.json">Raw results</a>
+    <a class="btn" href="#citation">Citation</a>
+    <span class="btn off" title="The code will be released when the paper is published">Code (coming soon)</span>
+  </nav>
+</header>
+
+<main id="main">
+
+<!-- ================= OVERVIEW (Fig. 1) ================= -->
+<section class="first wrap" aria-labelledby="h-overview">
+  <h2 id="h-overview" style="position:absolute;left:-999px">Benchmark overview</h2>
+  <figure class="fig"><img src="static/figures/fig1_framework.png" alt="Benchmark pipeline: three datasets, four fine-tuned backbones, a choice of target class, attribution methods from four families plus a random map, 22 Quantus metrics, and four analyses."></figure>
+  <p class="caption"><b>Benchmark pipeline.</b> Images from three datasets are classified by four fine-tuned backbones. Each prediction is explained for a chosen target class with 12 attribution methods from four families and a random map. Every heat-map is scored with 22 Quantus metrics, and the localisation metrics compare it with the clinician lesion mask.</p>
+</section>
+
+<!-- ================= ABSTRACT ================= -->
+<section class="wrap" id="abstract" aria-labelledby="h-abstract">
+  <h2 id="h-abstract">Abstract</h2>
+  <div class="prose">
+    <p>Heat-maps produced by attribution methods are often used to show which part of a medical image led a classifier to its decision. Most evidence about which method to trust, however, comes from convolutional neural networks (CNNs) and natural photographs. This study examines whether this evidence transfers to medical images and to Vision Transformers (ViTs). Four backbones (a CNN, a standard ViT, a hierarchical transformer and a linear-attention transformer) are fine-tuned with one fixed recipe on three public datasets with clinician-drawn masks: breast ultrasound (BUSI), slit-lamp photographs of cataract (SLID) and chest X-rays with pleural effusion (ChestX-Det). Each model is explained with 12 attribution methods and a random control, and every heat-map is scored with 22 metrics of faithfulness, robustness, complexity and localisation. Localisation is assessed for the true class and compared with the score of a random heat-map. The ranking of the methods depends mainly on the architecture. For localisation, rankings agree well between datasets for the same backbone (mean Spearman correlation 0.71) but poorly between backbones on the same dataset (0.28). Grad-CAM localises lesions on the CNN (2.4–3.2 times the random level) but remains at or near the random level on the linear-attention transformer (1.0–1.5 times), whereas simple gradient methods exceed the random level on every backbone and dataset. The best method for each backbone remains the same when the predicted class is explained instead of the true class, or when only correctly classified images are used; only class activation maps are affected. Two widely used metrics, Faithfulness Correlation and insertion–deletion, were found to be unreliable for comparing methods.</p>
+  </div>
+  <div class="stats" id="stats"></div>
+</section>
+
+<!-- ================= RQ2: TRANSFER ================= -->
+<section class="wrap" id="results" aria-labelledby="h-transfer">
+  <span class="rq">Architecture or modality?</span>
+  <h2 id="h-transfer">Rankings follow the backbone, not the dataset</h2>
+  <p class="lede">The 11 methods that run on every backbone are ranked for each metric, and two rankings are compared with the Spearman correlation ρ. <b>Across modalities</b> compares two datasets with the same backbone. <b>Across architectures</b> compares two backbones on the same dataset. Two unrelated rankings of 11 methods would give about 0.</p>
+  <figure class="fig"><img src="static/figures/fig4_transfer.png" alt="(a) EBPG method-ranking agreement matrix, with high agreement within the same backbone. (b) Mean Spearman correlation by metric group, higher across modalities than across architectures."></figure>
+  <p class="caption"><b>(a)</b> Agreement of EBPG method rankings between every backbone–dataset pair. The dark blocks on the diagonal show that one backbone ranks the methods similarly on all three datasets. <b>(b)</b> Mean ρ by metric group, with 95% bootstrap confidence intervals. For localisation, rankings agree at 0.55 across modalities but only 0.28 across architectures.</p>
+  <details class="explore">
+    <summary>Explore the rankings interactively</summary>
+    <div class="card">
+      <div class="controls">
+        <label>Compare <span class="seg" id="bumpMode"></span></label>
+        <label id="bumpFixLabel"><span id="bumpFixName">Dataset</span> <select id="bumpFix"></select></label>
+        <label>Ranked by <select id="bumpMetric"></select></label>
+        <button class="toggle" id="bumpToggle" aria-pressed="false">Show as table</button>
+      </div>
+      <div class="scroll" id="bumpChartBox"><svg class="bump" id="bump" role="img" aria-label="Method rank in each column"></svg></div>
+      <div class="scroll" id="bumpTableBox" hidden></div>
+      <div class="legend" id="famLegend"></div>
+    </div>
+    <p class="caption" id="bumpCaption"></p>
+  </details>
+</section>
+
+<!-- ================= RQ1: CHANCE ================= -->
+<section class="wrap" aria-labelledby="h-chance">
+  <span class="rq">Localisation</span>
+  <h2 id="h-chance">How much better than a random heat-map?</h2>
+  <p class="lede">Each EBPG score is divided by the score of a random heat-map on the same backbone and images, so <b>1×</b> means no better than random. This puts the datasets on one scale, although their lesion sizes differ about threefold. The true class is explained.</p>
+  <figure class="fig"><img src="static/figures/fig3_ebpg_chance.png" alt="EBPG as a multiple of chance for every method and backbone on BUSI, SLID and ChestX-Det."></figure>
+  <p class="caption" id="chCaption"></p>
+  <details class="explore">
+    <summary>Explore other localisation metrics</summary>
+    <div class="card">
+      <div class="controls"><label>Metric <select id="chMetric"></select></label></div>
+      <div class="scroll"><table id="chTable"></table></div>
+    </div>
+  </details>
+</section>
+
+<!-- ================= RQ3: TARGET ================= -->
+<section class="wrap" aria-labelledby="h-target">
+  <span class="rq">Explanation target</span>
+  <h2 id="h-target">Does it matter which class is explained?</h2>
+  <p class="lede">When a model misclassifies an image, explaining its prediction can make a method look worse only because the classifier was wrong. We therefore explain the true class, and check whether the results change when the predicted class is explained instead.</p>
+  <figure class="fig"><img src="static/figures/fig5_target.png" alt="EBPG with the predicted-class target against the ground-truth target, per dataset. Points lie on the diagonal except some CAM methods."></figure>
+  <p class="caption"><b>Predicted class vs true class.</b> Each point is one method on one backbone. Points on the dashed diagonal give the same score under both targets. Gradient, perturbation and attention methods stay on the diagonal; only the CAM methods move.</p>
+  <figure class="fig" style="margin-top:22px"><img src="static/figures/fig8_mechanism.png" alt="Why the target matters only for CAM: (a) gradient methods give the same heat-map for either class, (b) CAM keeps different channels per class, (c) ViT-B/16 Grad-CAM gives empty maps."></figure>
+  <p class="caption"><b>Why only CAM methods change.</b> (a) In a two-class task the gradients of the two classes are near mirror images, so gradient heat-maps are the same for either class. (b) CAM weights change sign with the class, so a different set of channels survives the ReLU. (c) On ViT-B/16 the weighted sum can fall below zero on every patch, which leaves an empty Grad-CAM map.</p>
+  <details class="explore">
+    <summary>Best method under each protocol</summary>
+    <div class="card">
+      <div class="controls"><label>Dataset <span class="seg" id="tgDs"></span></label></div>
+      <div class="scroll"><table id="tgTable"></table></div>
+    </div>
+    <p class="caption" id="tgCaption"></p>
+  </details>
+</section>
+
+<!-- ================= MODELS ================= -->
+<section class="wrap" aria-labelledby="h-models">
+  <span class="rq">Setup</span>
+  <h2 id="h-models">The models being explained</h2>
+  <p class="lede">Each backbone was fine-tuned with one recipe on every dataset, so differences reflect the architecture rather than tuning. Test scores come from each dataset's held-out test split. "Eval" covers the 20 lesion images that are explained.</p>
+  <div class="card scroll"><table id="accTable"></table></div>
+</section>
+
+<!-- ================= RESULT MATRIX ================= -->
+<section class="wrap" aria-labelledby="h-matrix">
+  <span class="rq">All 22 metrics</span>
+  <h2 id="h-matrix">Result explorer</h2>
+  <p class="lede">Mean score over the 20 evaluation images. Localisation is scored for the true class. An empty heat-map counts as 0, and Max-Sensitivity is the median over images (∞ means most maps failed). Shading runs from worst to best within each column. <b>Bold</b> marks the best method per backbone and <u>underline</u> the second best. Hover over a cell for details.</p>
+  <div class="card">
+    <div class="controls">
+      <label>Dataset <span class="seg" id="mxDs"></span></label>
+      <label>Metric <select id="mxMetric"></select></label>
+    </div>
+    <div class="scroll"><table id="matrix"></table></div>
+  </div>
+</section>
+
+<!-- ================= RQ4: SIGNIFICANCE ================= -->
+<section class="wrap" aria-labelledby="h-stats">
+  <span class="rq">Metric reliability</span>
+  <h2 id="h-stats">Which metrics can tell the methods apart?</h2>
+  <p class="lede">Image-level Friedman tests over the ranked methods, with Bonferroni correction for the 22 metrics. A metric that cannot separate the methods is of little use for choosing one.</p>
+  <div class="card">
+    <div class="controls"><label>Dataset <span class="seg" id="frDs"></span></label></div>
+    <div class="scroll"><table id="frTable"></table></div>
+  </div>
+</section>
+
+<!-- ================= GALLERY ================= -->
+<section class="wrap" aria-labelledby="h-gallery">
+  <h2 id="h-gallery">Explanation gallery</h2>
+  <p class="lede">Each row is a backbone and each column is an attribution method. The green outline is the clinician annotation. "n/a" marks a method that does not apply to that backbone.</p>
+  <div class="controls" style="justify-content:center"><label>Dataset <span class="seg" id="galDs"></span></label></div>
+  <figure class="fig scroll"><img id="galImg" class="wide" alt="Attribution maps for each backbone and method" loading="lazy"></figure>
+</section>
+
+<!-- ================= COST ================= -->
+<section class="wrap" aria-labelledby="h-cost">
+  <h2 id="h-cost">Cost and quality</h2>
+  <p class="lede">Mean time per explanation on the CPU, against how well each method localises lesions (mean EBPG as a multiple of chance over the 12 dataset–backbone pairs).</p>
+  <figure class="fig" style="max-width:760px;margin-inline:auto"><img src="static/figures/fig6_cost.png" alt="Mean EBPG over chance against mean time per explanation, log scale. Saliency and Input×Gradient are fast and accurate; RISE, LIME and Occlusion are slow."></figure>
+  <p class="caption" style="text-align:center">Saliency and Input×Gradient are both fast and among the best at localisation. The perturbation methods take seconds to minutes per image.</p>
+</section>
+
+<!-- ================= DATASETS ================= -->
+<section class="wrap" id="datasets" aria-labelledby="h-data">
+  <h2 id="h-data">Datasets</h2>
+  <p class="lede">All three datasets are public and come with pixel-level annotations drawn by clinicians. Please cite the original papers when you use them.</p>
+  <figure class="fig" style="margin-bottom:18px"><img src="static/figures/fig2_datasets.jpg" alt="Example images with clinician annotations: BUSI breast lesions, SLID cataract regions and normal eyes, ChestX-Det pleural effusions and normal radiographs." loading="lazy"></figure>
+  <div class="ds-grid">
+    <div class="card">
+      <h3>BUSI</h3>
+      <p>Breast ultrasound images (benign, malignant and normal) with lesion masks. Al-Dhabyani et al., <i>Data in Brief</i> 28, 2020.</p>
+      <div class="links"><a href="https://www.sciencedirect.com/science/article/pii/S2352340919312181">Paper</a><a href="https://academictorrents.com/details/d0b7b7ae40610bbeaea385aeb51658f527c86a16">Download</a></div>
+    </div>
+    <div class="card">
+      <h3>SLID</h3>
+      <p>Slit-lamp photographs of the front of the eye. We use the cataract-versus-normal task with the cataract annotations. Xu et al., <i>Frontiers in Digital Health</i> 7, 2026.</p>
+      <div class="links"><a href="https://www.frontiersin.org/journals/digital-health/articles/10.3389/fdgth.2025.1716501/full">Paper</a><a href="https://github.com/xumingyu-hub/SLID">Download</a></div>
+    </div>
+    <div class="card">
+      <h3>ChestX-Det</h3>
+      <p>Frontal chest X-rays with radiologist-drawn outlines of thoracic findings. We use the pleural-effusion-versus-normal task. Lian et al., 2021.</p>
+      <div class="links"><a href="https://arxiv.org/abs/2006.10550">Paper</a><a href="https://github.com/Deepwise-AILab/ChestX-Det-Dataset">Download</a></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= CITATION ================= -->
+<section class="wrap" id="citation" aria-labelledby="h-cite">
+  <h2 id="h-cite">Citation</h2>
+  <p class="lede">Please use the following citation when referencing this work.</p>
+  <div class="copy-wrap"><button class="copy" data-for="bibCode">Copy</button>
+<pre id="bibCode">@inproceedings{silva-xai-transfer-2026,
+  title  = {Does Explainability Transfer Across Architectures and Imaging Modalities? A Controlled Benchmark of Attribution Methods on Vision Transformers and CNNs for Medical Image Analysis},
+  author = {Sahan Silva and Chamuditha Wanninayake and Pubudu Sanjeewani and Asanka Perera},
+  year   = {2026}
+}</pre></div>
+</section>
+</main>
+
+<footer class="wrap">
+  <p>Project website hosted with GitHub Pages. The code will be released when the paper is published.</p>
+</footer>
+
+<script src="benchmark.js"></script>
+<script>
+(function(){
+const B = window.BENCH;
+const DS = Object.keys(B.datasets), BB = Object.keys(B.backbones), MM = Object.keys(B.methods), RK = B.ranked;
+const FAMS = ["Gradient","CAM","Attention","Perturbation","Baseline"];
+const DIMS = ["Faithfulness","Robustness","Complexity","Localisation","Cost"];
+const LOC = Object.keys(B.metrics).filter(k => B.metrics[k].dimension==="Localisation");
+const famVar = f => `var(--f-${f.toLowerCase()})`;
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const mean = a => a.reduce((x,y)=>x+y,0)/a.length;
+const toN = v => v==="inf" ? Infinity : v;
+const idx = {};
+for (const c of B.cells){ c.mean = toN(c.mean); idx[`${c.d}|${c.b}|${c.m}|${c.k}`] = c; }
+const cell = (d,b,m,k) => idx[`${d}|${b}|${m}|${k}`];
+const val = (d,b,m,k) => { const c = cell(d,b,m,k); return c && c.mean!=null ? c.mean : null; };
+const hib = k => B.metrics[k].higher_is_better;
+const better = k => (a,b) => a===b ? 0 : (hib(k) ? (a<b?1:-1) : (a<b?-1:1));   // sorts best first
+const mLabel = m => (B.methods[m]||{label:m}).label;
+const dShort = d => B.datasets[d].label;
+function fmt(v){
+  if (v==null) return "—";
+  if (v===Infinity) return "∞";
+  const a = Math.abs(v);
+  if (a!==0 && (a<1e-3 || a>=1e5)) return v.toExponential(2);
+  if (a>=100) return v.toFixed(0);
+  if (a>=10) return v.toFixed(1);
+  return v.toFixed(3);
+}
+const NS = "http://www.w3.org/2000/svg";
+function el(tag, attrs, parent, text){
+  const e = document.createElementNS(NS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  if (text!=null) e.textContent = text;
+  if (parent) parent.appendChild(e);
+  return e;
+}
+function metricSelect(sel, def, filter){
+  for (const dim of DIMS){
+    const ks = Object.keys(B.metrics).filter(k => B.metrics[k].dimension===dim && (!filter || filter(k)));
+    if (!ks.length) continue;
+    const og = document.createElement("optgroup"); og.label = dim;
+    for (const k of ks){
+      const o = document.createElement("option"); o.value = k;
+      o.textContent = `${B.metrics[k].label} (${hib(k)?"↑":"↓"})`; og.appendChild(o);
+    }
+    sel.appendChild(og);
+  }
+  sel.value = def;
+}
+function segmented(box, items, initial, onChange){
+  box.innerHTML = ""; let cur = initial;
+  items.forEach(([v,label]) => {
+    const b = document.createElement("button"); b.type = "button"; b.textContent = label;
+    b.setAttribute("aria-pressed", String(v===cur));
+    b.onclick = () => { cur = v; [...box.children].forEach(x => x.setAttribute("aria-pressed", String(x===b))); onChange(v); };
+    box.appendChild(b);
+  });
+  onChange(cur);
+}
+const dsItems = DS.map(d => [d, dShort(d)]);
+
+/* ---------- ranking + Spearman ---------- */
+function colRank(d,b,k){
+  const rows = RK.map(m => ({m, v:val(d,b,m,k)})).filter(r => r.v!=null);
+  const cmp = better(k);
+  rows.sort((x,y) => cmp(x.v,y.v) || mLabel(x.m).localeCompare(mLabel(y.m)));
+  rows.forEach((r,i) => r.rank = i+1);
+  return rows;
+}
+function avgRanks(vals){
+  const o = vals.map((v,i)=>i).sort((i,j) => vals[i]===vals[j] ? 0 : (vals[i]<vals[j]?-1:1));
+  const r = new Array(vals.length);
+  for (let i=0; i<o.length;){
+    let j=i; while (j+1<o.length && vals[o[j+1]]===vals[o[i]]) j++;
+    for (let t=i; t<=j; t++) r[o[t]] = (i+j)/2 + 1;
+    i = j+1;
+  }
+  return r;
+}
+function spearman(x,y){
+  const rx = avgRanks(x), ry = avgRanks(y), mx = mean(rx), my = mean(ry);
+  let n=0, a=0, b=0;
+  for (let i=0;i<rx.length;i++){ n += (rx[i]-mx)*(ry[i]-my); a += (rx[i]-mx)**2; b += (ry[i]-my)**2; }
+  return a && b ? n/Math.sqrt(a*b) : NaN;
+}
+function pairRho(c1,c2,k){
+  const ms = RK.filter(m => val(c1.d,c1.b,m,k)!=null && val(c2.d,c2.b,m,k)!=null);
+  return ms.length>3 ? spearman(ms.map(m=>val(c1.d,c1.b,m,k)), ms.map(m=>val(c2.d,c2.b,m,k))) : NaN;
+}
+
+/* ---------- legend ---------- */
+$("famLegend").innerHTML = ["Gradient","CAM","Perturbation"].map(f =>
+  `<span><i style="background:${famVar(f)}"></i>${f}</span>`).join("") + `<span style="margin-left:auto">Hover a line to follow one method</span>`;
+
+/* ---------- hero bump chart ---------- */
+let bumpMode = "arch";
+const bm = $("bumpMetric"), bf = $("bumpFix");
+metricSelect(bm, "EBPG", k => k!=="time_ms");
+function fillFix(){
+  const items = bumpMode==="arch" ? DS.map(d => [d, `${dShort(d)} (${B.datasets[d].modality.toLowerCase()})`])
+                                  : BB.map(b => [b, `${B.backbones[b].label} (${B.backbones[b].family})`]);
+  const keep = bf.value;
+  bf.innerHTML = items.map(([v,l]) => `<option value="${v}">${esc(l)}</option>`).join("");
+  bf.value = items.some(i=>i[0]===keep) ? keep : items[0][0];
+  $("bumpFixName").textContent = bumpMode==="arch" ? "Dataset" : "Backbone";
+}
+function drawBump(){
+  const k = bm.value, fix = bf.value, isArch = bumpMode==="arch";
+  const cols = isArch ? BB.map(b => ({d:fix, b, label:B.backbones[b].label, sub:B.backbones[b].family}))
+                      : DS.map(d => ({d, b:fix, label:dShort(d), sub:B.datasets[d].modality}));
+  const ranks = cols.map(c => colRank(c.d,c.b,k));
+  const n = Math.max(...ranks.map(r=>r.length));
+  const W = 800, padL = 160, padR = 160, top = 64, rowH = 31, H = top + rowH*(n-1) + 24;
+  const x = i => padL + i*(W-padL-padR)/(cols.length-1), y = r => top + (r-1)*rowH;
+  const svg = $("bump"); svg.innerHTML = ""; svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+  cols.forEach((c,i) => {
+    el("text",{x:x(i),y:18,"text-anchor":"middle","font-weight":600,"font-size":14},svg,c.label);
+    el("text",{x:x(i),y:35,"text-anchor":"middle","font-size":11,class:"muted"},svg,c.sub);
+  });
+  const methods = ranks[0].map(r => r.m);
+  for (const m of methods){
+    const col = famVar(B.methods[m].family);
+    const pts = ranks.map(rs => rs.find(r => r.m===m));
+    if (pts.some(p=>!p)) continue;
+    const g = el("g",{class:"ln",tabindex:0},svg);
+    let dp = "";
+    pts.forEach((p,i) => { const X=x(i), Y=y(p.rank);
+      if (!i) dp = `M${X},${Y}`; else { const px=x(i-1), py=y(pts[i-1].rank), mx=(px+X)/2; dp += ` C${mx},${py} ${mx},${Y} ${X},${Y}`; } });
+    el("path",{d:dp,fill:"none",style:`stroke:${col};stroke-width:2.5`},g);
+    pts.forEach((p,i) => {
+      const cc = el("circle",{cx:x(i),cy:y(p.rank),r:11,style:`fill:var(--surface);stroke:${col};stroke-width:2`},g);
+      el("title",{},cc,`${mLabel(m)} on ${cols[i].label}: rank ${p.rank}, score ${fmt(p.v)}`);
+      el("text",{x:x(i),y:y(p.rank)+4,"text-anchor":"middle","font-size":11,"font-weight":600},g,p.rank);
+    });
+    el("text",{x:x(0)-18,y:y(pts[0].rank)+4,"text-anchor":"end","font-size":13},g,mLabel(m));
+    el("text",{x:x(cols.length-1)+18,y:y(pts[pts.length-1].rank)+4,"font-size":13},g,mLabel(m));
+    const on = () => { svg.classList.add("hl"); g.classList.add("on"); }, off = () => { svg.classList.remove("hl"); g.classList.remove("on"); };
+    g.addEventListener("mouseenter",on); g.addEventListener("mouseleave",off); g.addEventListener("focus",on); g.addEventListener("blur",off);
+  }
+  let h = `<table><thead><tr><th>Method</th>${cols.map(c=>`<th>${esc(c.label)}</th>`).join("")}</tr></thead><tbody>`;
+  for (const m of methods){
+    h += `<tr><td><span class="sw" style="background:${famVar(B.methods[m].family)}"></span>${esc(mLabel(m))}</td>` +
+      ranks.map(rs => { const p = rs.find(r=>r.m===m); return p ? `<td>#${p.rank} <span style="color:var(--muted)">(${fmt(p.v)})</span></td>` : "<td>—</td>"; }).join("") + "</tr>";
+  }
+  $("bumpTableBox").innerHTML = h + "</tbody></table>";
+  const rhos = [];
+  for (let i=0;i<cols.length;i++) for (let j=i+1;j<cols.length;j++){ const r = pairRho(cols[i],cols[j],k); if (!isNaN(r)) rhos.push(r); }
+  const rho = rhos.length ? mean(rhos) : NaN;
+  const set = B.transfer.find(t => t.set===(k==="EBPG" ? "EBPG" : B.metrics[k].dimension));
+  const fixName = isArch ? dShort(fix) : B.backbones[fix].label;
+  $("bumpCaption").innerHTML =
+    `<b>${isArch ? `Same dataset (${esc(fixName)}), four backbones:` : `Same backbone (${esc(fixName)}), three datasets:`}</b> ` +
+    `the mean Spearman correlation between the rankings shown is <b>ρ = ${isNaN(rho)?"—":rho.toFixed(2)}</b>. ` +
+    (set ? `Over the whole benchmark, ${k==="EBPG" ? "EBPG" : esc(set.set.toLowerCase())} rankings agree at ρ = ${set.mod.toFixed(2)} between datasets for the same backbone, ` +
+           `but at ρ = ${set.arch.toFixed(2)} between backbones on the same dataset. ` : "") +
+    `Switch between the two views to compare them. Lines that stay level mean the ranking transfers.`;
+}
+bm.onchange = drawBump; bf.onchange = drawBump;
+segmented($("bumpMode"), [["arch","Backbones on one dataset"],["mod","Datasets for one backbone"]], "arch",
+  v => { bumpMode = v; fillFix(); drawBump(); });
+$("bumpToggle").onclick = function(){
+  const showTable = $("bumpTableBox").hidden;
+  $("bumpTableBox").hidden = !showTable; $("bumpChartBox").hidden = showTable;
+  this.textContent = showTable ? "Show as chart" : "Show as table"; this.setAttribute("aria-pressed", String(showTable));
+};
+
+/* ---------- stats + key findings ---------- */
+$("stats").innerHTML = [
+  [BB.length,"backbones: CNN, standard ViT, hierarchical, linear attention"],
+  [DS.length,"public datasets with clinician masks"],
+  [MM.length-1,"attribution methods + a random control"],
+  [Object.keys(B.metrics).length-1,"metrics of faithfulness, robustness, complexity, localisation"],
+  [20,"lesion images explained per model"],
+  [3,"explanation-target protocols"]
+].map(([v,l]) => `<div class="stat"><b>${v}</b><span>${l}</span></div>`).join("");
+
+/* ---------- chance grid ---------- */
+const chM = $("chMetric");
+metricSelect(chM, "EBPG", k => LOC.includes(k) && k!=="AL");
+function drawChance(){
+  const k = chM.value;
+  let h = `<thead><tr><th rowspan="2">Method</th>${DS.map(d=>`<th class="grp-h sep" colspan="${BB.length}">${esc(dShort(d))}</th>`).join("")}</tr>` +
+          `<tr>${DS.map(()=>BB.map((b,i)=>`<th class="${i?"":"sep"}">${esc(B.backbones[b].label)}</th>`).join("")).join("")}</tr></thead><tbody>`;
+  for (const fam of FAMS.filter(f=>f!=="Baseline")){
+    const ms = MM.filter(m => B.methods[m].family===fam);
+    h += `<tr class="grp"><td colspan="${1+DS.length*BB.length}">${fam}</td></tr>`;
+    for (const m of ms){
+      h += `<tr><td><span class="sw" style="background:${famVar(fam)}"></span>${esc(mLabel(m))}</td>`;
+      DS.forEach(d => BB.forEach((b,i) => {
+        const v = val(d,b,m,k), r = val(d,b,"random",k), cls = i ? "" : "sep";
+        if (v==null || !r){ h += `<td class="${cls}" style="color:var(--faint)">—</td>`; return; }
+        const q = v/r, t = Math.max(-1, Math.min(1, Math.log2(Math.max(q,1e-3))/2));
+        const bg = Math.abs(t) < 0.08 ? "transparent" : `color-mix(in srgb, ${t>0?"var(--pos)":"var(--neg)"} ${Math.round(Math.abs(t)*55)}%, transparent)`;
+        h += `<td class="${cls}" style="background:${bg}" title="${esc(`${mLabel(m)}: ${fmt(v)} vs random ${fmt(r)}`)}">${q.toFixed(1)}×</td>`;
+      }));
+      h += "</tr>";
+    }
+  }
+  h += `<tr class="chance"><td>Random (score = 1×)</td>` + DS.map(d => BB.map((b,i) => `<td class="${i?"":"sep"}">${fmt(val(d,b,"random",k))}</td>`).join("")).join("") + "</tr>";
+  $("chTable").innerHTML = h + "</tbody>";
+  // caption from the data
+  const K = "EBPG";   // the caption describes Fig. 3, which is EBPG
+  const ratio = (d,b,m) => { const v=val(d,b,m,K), r=val(d,b,"random",K); return v!=null && r ? v/r : null; };
+  const rng = (b,m) => { const q = DS.map(d=>ratio(d,b,m)).filter(x=>x!=null); return q.length ? `${Math.min(...q).toFixed(1)}–${Math.max(...q).toFixed(1)}×` : "—"; };
+  const simple = ["saliency","integrated_gradients","input_x_gradient","gradient_shap"];
+  const minSimple = Math.min(...simple.flatMap(m => DS.flatMap(d => BB.map(b => ratio(d,b,m)))).filter(x=>x!=null));
+  $("chCaption").innerHTML = `<b>EBPG as a multiple of chance.</b> Blue is above random, red below and grey at random. Grad-CAM reaches <b>${rng("resnet50","grad_cam")}</b> random on the CNN (RN-50) but <b>${rng("efficientvit_b2","grad_cam")}</b> on the linear-attention transformer (EffViT-B2). ` +
+    `The simple gradient methods (Saliency, Integrated Gradients, Input×Gradient, GradientSHAP) score at least <b>${minSimple.toFixed(2)}×</b> random on every backbone and dataset.`;
+}
+chM.onchange = drawChance; drawChance();
+
+/* ---------- explanation target ---------- */
+function drawTarget(d){
+  const P = [["gt","True class (main)"],["pred","Predicted class"],["correct","Correct images only"]];
+  const rows = B.target.filter(t => t.d===d && t.k==="EBPG" && RK.includes(t.m));
+  const best = (b,p) => rows.filter(t => t.b===b && t[p]!=null).sort((x,y) => y[p]-x[p])[0];
+  let h = `<thead><tr><th>Backbone</th>${P.map(([,l])=>`<th>${l}</th>`).join("")}<th>Same best method?</th></tr></thead><tbody>`;
+  let same = 0;
+  for (const b of BB){
+    const bs = P.map(([p]) => best(b,p));
+    const ok = bs.every(x => x && x.m===bs[0].m); same += ok;
+    h += `<tr><td>${esc(B.backbones[b].label)} <span style="color:var(--muted)">· ${esc(B.backbones[b].family)}</span></td>` +
+      bs.map((x,i) => x ? `<td>${esc(mLabel(x.m))} <span style="color:var(--muted)">(${fmt(x[P[i][0]])})</span></td>` : "<td>—</td>").join("") +
+      `<td class="${ok?"ok":"no"}">${ok?"✓ Yes":"✗ No"}</td></tr>`;
+  }
+  $("tgTable").innerHTML = h + "</tbody>";
+  const acc = B.accuracy.filter(a => a.d===d);
+  $("tgCaption").innerHTML = `On ${esc(dShort(d))} the best method stays the same under all three protocols for <b>${same} of ${BB.length}</b> backbones. ` +
+    `The models classified ${acc.map(a => `${a.eval_correct}/${a.eval_n}`).join(", ")} of the evaluation images correctly (${BB.map(b=>B.backbones[b].label).join(", ")}).`;
+}
+segmented($("tgDs"), dsItems, DS[0], drawTarget);
+
+/* ---------- accuracy table ---------- */
+(function(){
+  const f3 = v => v==null ? "—" : v.toFixed(3);
+  let h = `<thead><tr><th>Backbone</th><th>Test acc.</th><th>Balanced acc.</th><th>AUC</th><th>Eval correct</th><th>Eval confidence</th></tr></thead><tbody>`;
+  for (const d of DS){
+    h += `<tr class="grp"><td colspan="6">${esc(dShort(d))} · ${esc(B.datasets[d].modality)}</td></tr>`;
+    for (const b of BB){
+      const a = B.accuracy.find(r => r.d===d && r.b===b) || {};
+      h += `<tr><td>${esc(B.backbones[b].label)}</td><td>${f3(a.test_acc)}</td><td>${f3(a.test_bal_acc)}</td><td>${f3(a.test_auc)}</td><td>${a.eval_correct}/${a.eval_n}</td><td>${f3(a.eval_conf)}</td></tr>`;
+    }
+  }
+  $("accTable").innerHTML = h + "</tbody>";
+})();
+
+/* ---------- result matrix ---------- */
+let mxD = DS[0];
+const mxM = $("mxMetric");
+metricSelect(mxM, "EBPG");
+function drawMatrix(){
+  const d = mxD, k = mxM.value, cmp = better(k);
+  const st = {};
+  for (const b of BB){
+    const vs = MM.filter(m => m!=="random").map(m => ({m, v:val(d,b,m,k)})).filter(o => o.v!=null).sort((x,y) => cmp(x.v,y.v));
+    const fin = MM.map(m => val(d,b,m,k)).filter(v => v!=null && isFinite(v));
+    st[b] = {min:Math.min(...fin), max:Math.max(...fin), best:vs[0]&&vs[0].m, second:vs[1]&&vs[1].m};
+  }
+  let h = `<thead><tr><th>Method</th>${BB.map(b=>`<th>${esc(B.backbones[b].label)}</th>`).join("")}</tr></thead><tbody>`;
+  for (const fam of FAMS){
+    const ms = MM.filter(m => B.methods[m].family===fam);
+    h += `<tr class="grp"><td colspan="${BB.length+1}">${fam === "Baseline" ? "Control" : fam}</td></tr>`;
+    for (const m of ms){
+      h += `<tr><td><span class="sw" style="background:${famVar(fam)}"></span>${esc(mLabel(m))}</td>`;
+      for (const b of BB){
+        const c = cell(d,b,m,k), v = val(d,b,m,k), s = st[b];
+        if (v==null){ h += `<td style="color:var(--faint)">—</td>`; continue; }
+        let t = !isFinite(v) ? 0 : (s.max>s.min ? (v-s.min)/(s.max-s.min) : 0.5);
+        if (isFinite(v) && !hib(k)) t = 1-t;
+        const cls = m==="random" ? "" : m===s.best ? "best" : m===s.second ? "second" : "";
+        const tip = k==="MS" ? `median over ${c.n} images` : `${fmt(c.mean)} ± ${fmt(c.std)} (n=${c.n})`;
+        h += `<td class="${cls}" title="${esc(tip)}" style="background:color-mix(in srgb, var(--accent) ${Math.round(t*38)}%, transparent)">${fmt(v)}</td>`;
+      }
+      h += "</tr>";
+    }
+  }
+  $("matrix").innerHTML = h + "</tbody>";
+}
+mxM.onchange = drawMatrix;
+segmented($("mxDs"), dsItems, DS[0], v => { mxD = v; drawMatrix(); });
+
+/* ---------- friedman ---------- */
+function drawFr(d){
+  const order = Object.keys(B.metrics);
+  const rows = B.friedman.filter(r => r.d===d).sort((a,b) => order.indexOf(a.metric)-order.indexOf(b.metric));
+  let h = `<thead><tr><th>Metric</th><th>Group</th><th>Blocks</th><th>p (Bonferroni)</th><th>Separates methods?</th><th>Best mean rank</th></tr></thead><tbody>`;
+  for (const r of rows){
+    const m = B.metrics[r.metric], ok = r.p < 0.05;
+    h += `<tr><td>${esc(m ? m.label : r.metric)}</td><td style="text-align:left;color:var(--muted)">${esc(m ? m.dimension : "")}</td><td>${r.blocks}</td>` +
+         `<td>${r.p<1e-3 ? r.p.toExponential(1) : r.p.toFixed(3)}</td><td class="${ok?"ok":"no"}">${ok?"✓ Yes":"✗ No"}</td><td>${esc(mLabel(r.best))}</td></tr>`;
+  }
+  $("frTable").innerHTML = h + "</tbody>";
+}
+segmented($("frDs"), dsItems, DS[0], drawFr);
+
+/* ---------- gallery ---------- */
+const GALLERY = {busi:"busi", slid:"slid", chestxdet_effusion:"cxd"};
+segmented($("galDs"), dsItems, DS[0], d => {
+  $("galImg").src = `static/figures/fig7_gallery_${GALLERY[d]}.jpg`;
+  $("galImg").alt = `Attribution maps of every method and backbone on one ${dShort(d)} image`;
+});
+
+/* ---------- copy ---------- */
+document.querySelectorAll(".copy").forEach(b => b.onclick = async () => {
+  try { await navigator.clipboard.writeText($(b.dataset.for).textContent); b.textContent = "Copied"; }
+  catch(e){ b.textContent = "Select & copy"; }
+  setTimeout(() => b.textContent = "Copy", 1500);
+});
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+# ------------------------------------------------------------------
+# Until the paper is published this repository publishes ONLY the
+# results website (docs/). Everything else stays private on this
+# computer: code, notebooks, paper, data, checkpoints and results.
+# After publication, remove the three "whitelist" lines below to
+# start tracking the code again.
+# ------------------------------------------------------------------
+
+# whitelist: ignore everything ...
+/*
+# ... except the website and this file
+!/docs/
+!/.gitignore
+
+# never commit macOS folder files
+.DS_Store
