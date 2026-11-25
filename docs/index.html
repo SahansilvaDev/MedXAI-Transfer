@@ -172,8 +172,10 @@ footer{border-top:1px solid var(--line);padding-block:30px 50px;color:var(--mute
   <span class="rq">Architecture or modality?</span>
   <h2 id="h-transfer">Rankings follow the backbone, not the dataset</h2>
   <p class="lede">The 11 methods that run on every backbone are ranked for each metric, and two rankings are compared with the Spearman correlation ρ. <b>Across modalities</b> compares two datasets with the same backbone. <b>Across architectures</b> compares two backbones on the same dataset. Two unrelated rankings of 11 methods would give about 0.</p>
-  <figure class="fig"><img src="static/figures/fig4_transfer.png" alt="(a) EBPG method-ranking agreement matrix, with high agreement within the same backbone. (b) Mean Spearman correlation by metric group, higher across modalities than across architectures."></figure>
+  <figure class="fig"><img src="static/figures/fig5_transfer.png" alt="(a) EBPG method-ranking agreement matrix, with high agreement within the same backbone. (b) Mean Spearman correlation by metric group, higher across modalities than across architectures."></figure>
   <p class="caption"><b>(a)</b> Agreement of EBPG method rankings between every backbone–dataset pair. The dark blocks on the diagonal show that one backbone ranks the methods similarly on all three datasets. <b>(b)</b> Mean ρ by metric group, with 95% bootstrap confidence intervals. For localisation, rankings agree at 0.55 across modalities but only 0.28 across architectures.</p>
+  <figure class="fig" style="margin-top:22px"><img src="static/figures/fig6_rank_bump.png" alt="EBPG rank of the 11 methods: (a) BUSI on four backbones, where the lines cross a lot; (b) EfficientViT-B2 on three datasets, where the ranking stays similar." loading="lazy"></figure>
+  <p class="caption"><b>The rankings behind the correlations</b> (EBPG, true class; rank 1 = best). <b>(a)</b> One dataset (BUSI) on four backbones: Grad-CAM and Grad-CAM++ rank first and second on ResNet-50 but fall to the bottom on ViT-B/16 (mean ρ = 0.27). <b>(b)</b> One backbone (EfficientViT-B2) on three datasets: the simple gradient methods and Occlusion stay in the upper half everywhere (mean ρ = 0.66). CAM methods are drawn as thick lines.</p>
   <details class="explore">
     <summary>Explore the rankings interactively</summary>
     <div class="card">
@@ -212,9 +214,9 @@ footer{border-top:1px solid var(--line);padding-block:30px 50px;color:var(--mute
   <span class="rq">Explanation target</span>
   <h2 id="h-target">Does it matter which class is explained?</h2>
   <p class="lede">When a model misclassifies an image, explaining its prediction can make a method look worse only because the classifier was wrong. We therefore explain the true class, and check whether the results change when the predicted class is explained instead.</p>
-  <figure class="fig"><img src="static/figures/fig5_target.png" alt="EBPG with the predicted-class target against the ground-truth target, per dataset. Points lie on the diagonal except some CAM methods."></figure>
+  <figure class="fig"><img src="static/figures/fig7_target.png" alt="EBPG with the predicted-class target against the ground-truth target, per dataset. Points lie on the diagonal except some CAM methods."></figure>
   <p class="caption"><b>Predicted class vs true class.</b> Each point is one method on one backbone. Points on the dashed diagonal give the same score under both targets. Gradient, perturbation and attention methods stay on the diagonal; only the CAM methods move.</p>
-  <figure class="fig" style="margin-top:22px"><img src="static/figures/fig8_mechanism.png" alt="Why the target matters only for CAM: (a) gradient methods give the same heat-map for either class, (b) CAM keeps different channels per class, (c) ViT-B/16 Grad-CAM gives empty maps."></figure>
+  <figure class="fig" style="margin-top:22px"><img src="static/figures/fig10_mechanism.png" alt="Why the target matters only for CAM: (a) gradient methods give the same heat-map for either class, (b) CAM keeps different channels per class, (c) ViT-B/16 Grad-CAM gives empty maps."></figure>
   <p class="caption"><b>Why only CAM methods change.</b> (a) In a two-class task the gradients of the two classes are near mirror images, so gradient heat-maps are the same for either class. (b) CAM weights change sign with the class, so a different set of channels survives the ReLU. (c) On ViT-B/16 the weighted sum can fall below zero on every patch, which leaves an empty Grad-CAM map.</p>
   <details class="explore">
     <summary>Best method under each protocol</summary>
@@ -253,6 +255,8 @@ footer{border-top:1px solid var(--line);padding-block:30px 50px;color:var(--mute
   <span class="rq">Metric reliability</span>
   <h2 id="h-stats">Which metrics can tell the methods apart?</h2>
   <p class="lede">Image-level Friedman tests over the ranked methods, with Bonferroni correction for the 22 metrics. A metric that cannot separate the methods is of little use for choosing one.</p>
+  <figure class="fig" style="max-width:820px;margin-inline:auto;margin-bottom:10px"><img src="static/figures/fig4_metric_agreement.png" alt="Lower-triangle matrix of mean Spearman correlation between the method rankings of the 22 metrics, grouped into faithfulness, robustness, complexity and localisation." loading="lazy"></figure>
+  <p class="caption" style="margin-bottom:18px"><b>Do the metrics agree with each other?</b> Each cell is the Spearman correlation between the method rankings of two metrics, averaged over the 12 dataset–backbone pairs. The localisation metrics agree closely (mean ρ = 0.70), and so do the two complexity metrics (0.89). Faithfulness metrics agree only weakly (0.25), so the choice of faithfulness metric can change the conclusion.</p>
   <div class="card">
     <div class="controls"><label>Dataset <span class="seg" id="frDs"></span></label></div>
     <div class="scroll"><table id="frTable"></table></div>
@@ -267,11 +271,20 @@ footer{border-top:1px solid var(--line);padding-block:30px 50px;color:var(--mute
   <figure class="fig scroll"><img id="galImg" class="wide" alt="Attribution maps for each backbone and method" loading="lazy"></figure>
 </section>
 
+<!-- ================= METHOD PROFILE ================= -->
+<section class="wrap" aria-labelledby="h-profile">
+  <span class="rq">Recommendations</span>
+  <h2 id="h-profile">Which method should I use?</h2>
+  <p class="lede">For every dataset–backbone pair and metric, the methods are ranked and the rank is scaled from 0 (worst) to 1 (best). Each dot is the mean score over the metrics of one quality criterion and the 12 pairs.</p>
+  <figure class="fig" style="max-width:820px;margin-inline:auto"><img src="static/figures/fig11_method_profile.png" alt="Score of each method on faithfulness, robustness, complexity and localisation, from 0 to 1." loading="lazy"></figure>
+  <p class="caption" style="text-align:center">No method is best on all four criteria. Occlusion localises best but is the slowest, Saliency scores highest on faithfulness, SmoothGrad is the most stable and VarGrad the most concentrated. "–" = robustness not computed for the perturbation methods.</p>
+</section>
+
 <!-- ================= COST ================= -->
 <section class="wrap" aria-labelledby="h-cost">
   <h2 id="h-cost">Cost and quality</h2>
   <p class="lede">Mean time per explanation on the CPU, against how well each method localises lesions (mean EBPG as a multiple of chance over the 12 dataset–backbone pairs).</p>
-  <figure class="fig" style="max-width:760px;margin-inline:auto"><img src="static/figures/fig6_cost.png" alt="Mean EBPG over chance against mean time per explanation, log scale. Saliency and Input×Gradient are fast and accurate; RISE, LIME and Occlusion are slow."></figure>
+  <figure class="fig" style="max-width:760px;margin-inline:auto"><img src="static/figures/fig8_cost.png" alt="Mean EBPG over chance against mean time per explanation, log scale. Saliency and Input×Gradient are fast and accurate; RISE, LIME and Occlusion are slow."></figure>
   <p class="caption" style="text-align:center">Saliency and Input×Gradient are both fast and among the best at localisation. The perturbation methods take seconds to minutes per image.</p>
 </section>
 
@@ -538,10 +551,13 @@ function drawTarget(d){
   let same = 0;
   for (const b of BB){
     const bs = P.map(([p]) => best(b,p));
-    const ok = bs.every(x => x && x.m===bs[0].m); same += ok;
+    const exact = bs.every(x => x && x.m===bs[0].m);
+    // a near-tie (< 0.004 EBPG, as in the paper) counts as the same best method
+    const tie = !exact && bs.every((x,i) => { const r = rows.find(t => t.b===b && t.m===bs[0].m); return x && r && r[P[i][0]]!=null && x[P[i][0]] - r[P[i][0]] < 0.004; });
+    const ok = exact || tie; same += ok;
     h += `<tr><td>${esc(B.backbones[b].label)} <span style="color:var(--muted)">· ${esc(B.backbones[b].family)}</span></td>` +
       bs.map((x,i) => x ? `<td>${esc(mLabel(x.m))} <span style="color:var(--muted)">(${fmt(x[P[i][0]])})</span></td>` : "<td>—</td>").join("") +
-      `<td class="${ok?"ok":"no"}">${ok?"✓ Yes":"✗ No"}</td></tr>`;
+      `<td class="${ok?"ok":"no"}">${exact?"✓ Yes":tie?"✓ Yes (tie, &lt; 0.004)":"✗ No"}</td></tr>`;
   }
   $("tgTable").innerHTML = h + "</tbody>";
   const acc = B.accuracy.filter(a => a.d===d);
@@ -616,7 +632,7 @@ segmented($("frDs"), dsItems, DS[0], drawFr);
 /* ---------- gallery ---------- */
 const GALLERY = {busi:"busi", slid:"slid", chestxdet_effusion:"cxd"};
 segmented($("galDs"), dsItems, DS[0], d => {
-  $("galImg").src = `static/figures/fig7_gallery_${GALLERY[d]}.jpg`;
+  $("galImg").src = `static/figures/fig9_gallery_${GALLERY[d]}.jpg`;
   $("galImg").alt = `Attribution maps of every method and backbone on one ${dShort(d)} image`;
 });
 
