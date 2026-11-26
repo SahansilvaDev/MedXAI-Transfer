@@ -13,11 +13,9 @@ This repository hosts the results website of the paper. The code will be release
 ## Citation
 
 ```bibtex
-@article{silva-backbone-modality-2026,
-  title   = {Backbone Over Modality: Explainability Transfer Across Vision Transformers and CNNs in Medical Image Classification},
-  author  = {Sahan Silva and Chamuditha Wanninayake and Asanka Perera and Pubudu Sanjeewani},
-  journal = {Information Sciences},
-  year    = {2026},
-  note    = {Under review}
+@inproceedings{silva-backbone-modality-2026,
+  title  = {Backbone Over Modality: Explainability Transfer Across Vision Transformers and CNNs in Medical Image Classification},
+  author = {Sahan Silva and Chamuditha Wanninayake and Asanka Perera and Pubudu Sanjeewani},
+  year   = {2026}
 }
 ```
