@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Does Explainability Transfer?</title>
-<meta name="description" content="Does Explainability Transfer Across Architectures and Imaging Modalities? A Controlled Benchmark of Attribution Methods on Vision Transformers and CNNs for Medical Image Analysis.">
+<title>Backbone Over Modality</title>
+<meta name="description" content="Backbone Over Modality: Explainability Transfer Across Vision Transformers and CNNs in Medical Image Classification.">
 <style>
 :root{
   color-scheme: light;
@@ -47,7 +47,8 @@ h1{font:600 clamp(1.9rem,4.6vw,3rem)/1.14 var(--serif);letter-spacing:-.01em;mar
 sup{font-size:.68em;color:var(--muted);margin-left:1px}
 .affil{color:var(--muted);font-size:.9rem;margin:0 auto 8px;max-width:52em;line-height:1.5}
 .affil span{display:inline-block;margin:0 10px}
-.corr{color:var(--faint);font-size:.82rem;margin:0 0 26px}
+.corr{color:var(--faint);font-size:.82rem;margin:0 0 6px}
+.venue{color:var(--muted);font-size:.92rem;margin:0 0 26px}
 .btns{display:flex;flex-wrap:wrap;justify-content:center;gap:10px}
 .btn{display:inline-flex;align-items:center;gap:7px;background:var(--btn);color:var(--btn-ink);text-decoration:none;
   padding:9px 18px;border-radius:999px;font-weight:550;font-size:.95rem;border:1px solid transparent}
@@ -124,8 +125,8 @@ footer{border-top:1px solid var(--line);padding-block:30px 50px;color:var(--mute
 <a class="skip" href="#main">Skip to content</a>
 
 <header class="hero wrap">
-  <h1>Does Explainability Transfer Across Architectures and Imaging Modalities?</h1>
-  <p class="sub">A Controlled Benchmark of Attribution Methods on Vision Transformers and CNNs for Medical Image Analysis</p>
+  <h1>Backbone Over Modality</h1>
+  <p class="sub">Explainability Transfer Across Vision Transformers and CNNs in Medical Image Classification</p>
   <p class="authors">
     <span>Sahan Silva<sup>1</sup></span>
     <span>Chamuditha Wanninayake<sup>2</sup></span>
@@ -139,6 +140,7 @@ footer{border-top:1px solid var(--line);padding-block:30px 50px;color:var(--mute
     <span><sup>4</sup>School of Computing Technologies, RMIT University, Melbourne, Australia</span>
   </p>
   <p class="corr">* Corresponding author</p>
+  <p class="venue">Under review at <i>Information Sciences</i></p>
   <nav class="btns" aria-label="Project links">
     <a class="btn" href="#abstract">Abstract</a>
     <a class="btn" href="#results">Results</a>
@@ -162,7 +164,7 @@ footer{border-top:1px solid var(--line);padding-block:30px 50px;color:var(--mute
 <section class="wrap" id="abstract" aria-labelledby="h-abstract">
   <h2 id="h-abstract">Abstract</h2>
   <div class="prose">
-    <p>Heat-maps produced by attribution methods are often used to show which part of a medical image led a classifier to its decision. Most evidence about which method to trust, however, comes from convolutional neural networks (CNNs) and natural photographs. This study examines whether this evidence transfers to medical images and to Vision Transformers (ViTs). Four backbones (a CNN, a standard ViT, a hierarchical transformer and a linear-attention transformer) are fine-tuned with one fixed recipe on three public datasets with clinician-drawn masks: breast ultrasound (BUSI), slit-lamp photographs of cataract (SLID) and chest X-rays with pleural effusion (ChestX-Det). Each model is explained with 12 attribution methods and a random control, and every heat-map is scored with 22 metrics of faithfulness, robustness, complexity and localisation. Localisation is assessed for the true class and compared with the score of a random heat-map. The ranking of the methods depends mainly on the architecture. For localisation, rankings agree well between datasets for the same backbone (mean Spearman correlation 0.71) but poorly between backbones on the same dataset (0.28). Grad-CAM localises lesions on the CNN (2.4–3.2 times the random level) but remains at or near the random level on the linear-attention transformer (1.0–1.5 times), whereas simple gradient methods exceed the random level on every backbone and dataset. The best method for each backbone remains the same when the predicted class is explained instead of the true class, or when only correctly classified images are used; only class activation maps are affected. Two widely used metrics, Faithfulness Correlation and insertion–deletion, were found to be unreliable for comparing methods.</p>
+    <p>Attribution heatmaps show which part of a medical image drove a classifier&#39;s decision, yet evidence on which method to trust comes mostly from convolutional neural networks (CNNs) and natural photographs. We test whether this transfers to medical images and Vision Transformers (ViTs). Four backbones (CNN, standard ViT, hierarchical transformer, linear-attention transformer) were fine-tuned with one fixed recipe on three public datasets with clinician-drawn masks: breast ultrasound (BUSI), cataract slit-lamp photographs (SLID) and chest X-rays with pleural effusion (ChestX-Det). Each model was explained with 12 attribution methods and a random control; every heatmap was scored with 22 metrics of faithfulness, robustness, complexity and localisation. Rankings depend mainly on architecture: localisation rankings agree across datasets for the same backbone (mean Spearman correlation 0.71) but poorly across backbones on the same dataset (0.28). Grad-CAM localises lesions on the CNN (2.4–3.2 times random) but stays near random on the linear-attention transformer (1.0–1.5 times), whereas simple gradient methods exceed random on every backbone and dataset. The best method per backbone is unchanged when explaining the predicted class or using only correctly classified images; only class activation maps are affected. Faithfulness Correlation and insertion–deletion proved unreliable for comparing methods.</p>
   </div>
   <div class="stats" id="stats"></div>
 </section>
@@ -317,10 +319,12 @@ footer{border-top:1px solid var(--line);padding-block:30px 50px;color:var(--mute
   <h2 id="h-cite">Citation</h2>
   <p class="lede">Please use the following citation when referencing this work.</p>
   <div class="copy-wrap"><button class="copy" data-for="bibCode">Copy</button>
-<pre id="bibCode">@inproceedings{silva-xai-transfer-2026,
-  title  = {Does Explainability Transfer Across Architectures and Imaging Modalities? A Controlled Benchmark of Attribution Methods on Vision Transformers and CNNs for Medical Image Analysis},
-  author = {Sahan Silva and Chamuditha Wanninayake and Asanka Perera and Pubudu Sanjeewani},
-  year   = {2026}
+<pre id="bibCode">@article{silva-backbone-modality-2026,
+  title   = {Backbone Over Modality: Explainability Transfer Across Vision Transformers and CNNs in Medical Image Classification},
+  author  = {Sahan Silva and Chamuditha Wanninayake and Asanka Perera and Pubudu Sanjeewani},
+  journal = {Information Sciences},
+  year    = {2026},
+  note    = {Under review}
 }</pre></div>
 </section>
 </main>

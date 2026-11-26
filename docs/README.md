@@ -1,6 +1,8 @@
-# Does Explainability Transfer Across Architectures and Imaging Modalities?
+# Backbone Over Modality
 
-**A Controlled Benchmark of Attribution Methods on Vision Transformers and CNNs for Medical Image Analysis**
+**Explainability Transfer Across Vision Transformers and CNNs in Medical Image Classification**
+
+*Under review at Information Sciences*
 
 Sahan Silva, Chamuditha Wanninayake, Asanka Perera, Pubudu Sanjeewani
 
@@ -11,9 +13,11 @@ This repository hosts the results website of the paper. The code will be release
 ## Citation
 
 ```bibtex
-@inproceedings{silva-xai-transfer-2026,
-  title  = {Does Explainability Transfer Across Architectures and Imaging Modalities? A Controlled Benchmark of Attribution Methods on Vision Transformers and CNNs for Medical Image Analysis},
-  author = {Sahan Silva and Chamuditha Wanninayake and Asanka Perera and Pubudu Sanjeewani},
-  year   = {2026}
+@article{silva-backbone-modality-2026,
+  title   = {Backbone Over Modality: Explainability Transfer Across Vision Transformers and CNNs in Medical Image Classification},
+  author  = {Sahan Silva and Chamuditha Wanninayake and Asanka Perera and Pubudu Sanjeewani},
+  journal = {Information Sciences},
+  year    = {2026},
+  note    = {Under review}
 }
 ```
